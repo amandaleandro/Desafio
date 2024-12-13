@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: flask-app
-        image: <your-aws-account-id>.dkr.ecr.<region>.amazonaws.com/flask-app:latest
+        image: 084828601272.signin.aws.amazon.com/flask-app:latest
         ports:
         - containerPort: 80
 ---
