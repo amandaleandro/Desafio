@@ -47,14 +47,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Set up AWS credentials for ECR
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
       - name: Login to ECR
-        run: aws ecr get-login-password | docker login --username AWS --password-stdin <your-aws-account-id>.dkr.ecr.<region>.amazonaws.com
+        run: |
+          aws ecr get-login-password --region ${{ secrets.AWS_DEFAULT_REGION }} | docker login --username AWS --password-stdin <your-aws-account-id>.dkr.ecr.${{ secrets.AWS_DEFAULT_REGION }}.amazonaws.com
 
       - name: Build and Push Docker Image
         run: |
           docker build -t flask-app ./flask-app
-          docker tag flask-app:latest <your-aws-account-id>.dkr.ecr.<region>.amazonaws.com/flask-app:latest
-          docker push <your-aws-account-id>.dkr.ecr.<region>.amazonaws.com/flask-app:latest
+          docker tag flask-app:latest <your-aws-account-id>.dkr.ecr.${{ secrets.AWS_DEFAULT_REGION }}.amazonaws.com/flask-app:latest
+          docker push <your-aws-account-id>.dkr.ecr.${{ secrets.AWS_DEFAULT_REGION }}.amazonaws.com/flask-app:latest
 
       - name: Deploy to EKS
         run: kubectl apply -f k8s/flask_app_deployment.yaml
