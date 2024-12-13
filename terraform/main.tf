@@ -2,77 +2,7 @@ provider "aws" {
   region = "us-east-1"
 }
 
-resource "aws_iam_role" "eks_cluster_role" {
-  name = "eks-cluster-role-${random_id.eks_id.hex}"
-
-  lifecycle {
-    prevent_destroy = true  # Impede que o recurso seja destruído
-  }
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action    = "sts:AssumeRole"
-        Effect    = "Allow"
-        Principal = {
-          Service = "eks.amazonaws.com"
-        }
-      }
-    ]
-  })
-}
-
-resource "aws_iam_policy" "eks_cluster_policy" {
-  name        = "eks-cluster-policy-${random_id.eks_id.hex}"
-  description = "Policy for EKS cluster role"
-
-  lifecycle {
-    prevent_destroy = true  # Impede que o recurso seja destruído
-  }
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action   = "eks:DescribeCluster"
-        Effect   = "Allow"
-        Resource = "*"
-      }
-    ]
-  })
-}
-
-resource "aws_kms_key" "eks_key" {
-  description = "KMS key for EKS cluster"
-
-  lifecycle {
-    prevent_destroy = true  # Impede que o recurso seja destruído
-  }
-}
-
-resource "aws_kms_alias" "eks_kms_alias" {
-  name          = "alias/eks/my-eks-cluster-${random_id.eks_id.hex}"
-  target_key_id = aws_kms_key.eks_key.key_id
-
-  lifecycle {
-    prevent_destroy = true  # Impede que o recurso seja destruído
-  }
-}
-
-resource "aws_cloudwatch_log_group" "eks_log_group" {
-  name              = "/aws/eks/my-eks-cluster/cluster-${random_id.eks_id.hex}"
-  retention_in_days = 7
-
-  lifecycle {
-    prevent_destroy = true  # Impede que o recurso seja destruído
-  }
-}
-
-resource "random_id" "eks_id" {
-  byte_length = 8
-}
-
+# VPC Module
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "3.0"
@@ -88,30 +18,87 @@ module "vpc" {
   single_nat_gateway = true
 }
 
+resource "random_id" "eks_id" {
+  byte_length = 8
+}
+
+resource "aws_iam_role" "eks_cluster_role" {
+  name = "eks-cluster-role-${random_id.eks_id.hex}"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action    = "sts:AssumeRole"
+        Effect    = "Allow"
+        Principal = {
+          Service = "eks.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+# IAM Policy for EKS Cluster Role
+resource "aws_iam_policy" "eks_cluster_policy" {
+  name        = "eks-cluster-policy-${random_id.eks_id.hex}"
+  description = "Policy for EKS cluster role"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = "eks:DescribeCluster"
+        Effect   = "Allow"
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# EKS Cluster
 module "eks" {
   source          = "terraform-aws-modules/eks/aws"
-  cluster_name    = "my-eks-cluster-${random_id.eks_id.hex}"
-  cluster_version = "1.24"
+  cluster_name    = "my-eks-cluster"
+  cluster_version = "1.24"  # Atualize para uma versão suportada, como 1.24 ou superior
   vpc_id          = module.vpc.vpc_id
   subnet_ids      = module.vpc.private_subnets
 
   node_groups = {
-    eks_node_group = {
+    eks_nodes = {
       desired_capacity = 2
       max_capacity     = 3
       min_capacity     = 1
-      instance_type    = "t3.medium"
+
+      instance_type = "t3.medium"
     }
   }
 
-  enable_irsa = true
+  cluster_endpoint_public_access = true
 }
 
-resource "aws_iam_role_policy_attachment" "eks_policy_attachment" {
-  policy_arn = aws_iam_policy.eks_cluster_policy.arn
-  role       = aws_iam_role.eks_cluster_role.name
+# Outputs
+output "eks_cluster_id" {
+  value = module.eks.cluster_id
 }
 
-resource "random_id" "eks_id" {
-  byte_length = 8
+output "eks_cluster_endpoint" {
+  value = module.eks.cluster_endpoint
 }
+
+output "eks_cluster_certificate_authority_data" {
+  value = module.eks.cluster_certificate_authority_data
+}
+
+output "vpc_id" {
+  value = module.vpc.vpc_id
+}
+
+output "private_subnets" {
+  value = module.vpc.private_subnets
+}
+
+output "public_subnets" {
+  value = module.vpc.public_subnets
+}
+
