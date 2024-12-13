@@ -7,7 +7,7 @@ resource "aws_security_group" "eks_security_group" {
     from_port        = 443
     to_port          = 443
     protocol         = "tcp"
-    cidr_blocks      = ["<your-office-ip>/32"]
+    cidr_blocks      = ["0.0.0.0/32"]
   }
 
   egress {
