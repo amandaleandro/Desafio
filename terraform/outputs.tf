@@ -15,3 +15,8 @@ output "eks_cluster_endpoint" {
   description = "The endpoint of the EKS cluster"
   value       = module.eks.cluster_endpoint
 }
+# Output do VPC ID
+output "vpc_id" {
+  description = "The VPC ID"
+  value       = module.vpc.vpc_id
+}
