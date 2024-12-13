@@ -22,12 +22,12 @@ jobs:
 
       - name: Terraform Init
         run: |
-          cd path/to/your/terraform/directory
+          cd terraform
           terraform init
 
       - name: Terraform Apply
         run: |
-          cd path/to/your/terraform/directory
+          cd terraform
           terraform apply -auto-approve
         
   ansible:
@@ -57,6 +57,16 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      - name: Check if ECR repository exists and create if not
+        run: |
+          REPO_NAME=flask-app
+          if ! aws ecr describe-repositories --repository-names $REPO_NAME --region ${{ secrets.AWS_DEFAULT_REGION }} > /dev/null 2>&1; then
+            echo "Repository does not exist. Creating repository..."
+            aws ecr create-repository --repository-name $REPO_NAME --region ${{ secrets.AWS_DEFAULT_REGION }}
+          else
+            echo "Repository already exists."
+          fi
 
       - name: Login to ECR
         run: |
