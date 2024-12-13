@@ -7,7 +7,6 @@ on:
   pull_request:
     branches:
       - main
-
 env:
   AWS_REGION: 'us-east-1'
   KUBE_CONFIG_PATH: '/home/runner/.kube/config'
