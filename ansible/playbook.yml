@@ -1,0 +1,18 @@
+---
+- name: Setup Kubernetes Cluster
+  hosts: localhost
+  tasks:
+    - name: Install kubectl
+      shell: |
+        curl -o kubectl https://amazonaws.com/kubectl-linux-amd64
+        chmod +x ./kubectl
+        mv ./kubectl /usr/local/bin/kubectl
+
+    - name: Configure kubeconfig
+      shell: |
+        aws eks --region us-east-1 update-kubeconfig --name hello-world-cluster
+
+    - name: Deploy HelloWorld Application
+      kubernetes.core.k8s:
+        definition: "{{ lookup('file', './kubernetes/helloworld-deployment.yml') }}"
+        state: present 
