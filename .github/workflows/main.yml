@@ -21,10 +21,14 @@ jobs:
           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
 
       - name: Terraform Init
-        run: terraform init
+        run: |
+          cd path/to/your/terraform/directory
+          terraform init
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve
+        run: |
+          cd path/to/your/terraform/directory
+          terraform apply -auto-approve
         
   ansible:
     name: Configure Cluster with Ansible
