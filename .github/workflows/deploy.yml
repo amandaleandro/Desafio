@@ -45,10 +45,6 @@ jobs:
         working-directory: ./terraform
         run: terraform apply -auto-approve
 
-      - name: Output ECR Repository URL
-        working-directory: ./terraform
-        run: echo "ECR URL: $(terraform output ecr_repository_url)"
-
   build-and-push:
     name: Build and Push Docker Image to ECR
     runs-on: ubuntu-latest
